@@ -56,13 +56,14 @@ module.exports = {
     try {
       const review = await pool.query(queryStringForReviews, queryParamsForReviews);
       const review_id = review.rows[0].review_id;
-      for (let i = 0; i < photos.length; i++) {
-        await pool.query(queryStringForPhotos, [review_id, photos[i]]);
-      }
+      const queries = [];
+      photos.map((photo) => {
+        queries.push(pool.query(queryStringForPhotos, [review_id, photo]));
+      });
       for (let key in characteristics) {
-        await pool.query(queryStringForCharacteristics,[key, review_id, characteristics[key]]);
+        queries.push(pool.query(queryStringForCharacteristics, [key, review_id, characteristics[key]]));
       }
-      return review.rows[0];
+      return Promise.all(queries);
     } catch (err) {
       return err;
     }
